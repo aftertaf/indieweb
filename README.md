@@ -1,10 +1,3 @@
-Here you go, David — a clean, developer‑friendly **README.md** you can drop straight into your plugin ZIP.  
-It’s written for someone installing your plugin fresh, explaining *exactly* how to use it, how the custom fields work, and how the microformats behave with Astroid.
-
----
-
-# `README.md`
-
 # IndieWeb Content Plugin for Joomla 6  
 Adds clean Microformats2 (h‑entry + h‑card + post‑type properties) to Joomla articles, fully compatible with Astroid Framework.
 
