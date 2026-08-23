@@ -202,14 +202,3 @@ All three can be installed independently.
 **aftertaf**  
 Mont Gargan, Normandy  
 IndieWeb‑powered Joomla site
-
----
-
-If you want, I can also generate:
-
-- a **CHANGELOG.md**  
-- a **LICENSE file**  
-- a **screenshot.png** for Joomla’s extension manager  
-- a **GitHub‑ready README** with badges  
-
-Just tell me.
