@@ -8,6 +8,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Factory;
+use Joomla\Component\Fields\Administrator\Helper\FieldsHelper;
 use Joomla\CMS\Uri\Uri;
 
 class PlgContentWebmentionsender extends CMSPlugin
@@ -17,48 +18,81 @@ class PlgContentWebmentionsender extends CMSPlugin
     public function onContentAfterSave($context, $article, $isNew)
     {
         if ($context !== 'com_content.article') return;
+        if (!$this->app->isClient('site')) return;
+        if ($article->state != 1) return;
 
-        $content = $article->introtext . $article->fulltext;
-        preg_match_all('/https?:\/\/[^\s"\'<>]+/', $content, $matches);
+        $url = Uri::root() . 'index.php?option=com_content&view=article&id=' . (int) $article->id;
 
-        $links = array_unique($matches[0]);
-        $source = Uri::root() . 'index.php?option=com_content&view=article&id=' . $article->id;
+        $fields = FieldsHelper::getFields('com_content.article', $article, true) ?? [];
+        $fv = [];
+        foreach ($fields as $field) {
+            $fv[$field->name] = $field->value ?? '';
+        }
 
-        foreach ($links as $target) {
-            $this->sendWebmention($source, $target);
+        $targets = [];
+
+        if (!empty($fv['in_reply_to'])) {
+            $targets[] = trim($fv['in_reply_to']);
+        }
+        if (!empty($fv['like_of'])) {
+            $targets[] = trim($fv['like_of']);
+        }
+        if (!empty($fv['repost_of'])) {
+            $targets[] = trim($fv['repost_of']);
+        }
+
+        if (!empty($fv['syndication'])) {
+            foreach (explode(',', $fv['syndication']) as $t) {
+                $t = trim($t);
+                if ($t) $targets[] = $t;
+            }
+        }
+
+        if (!empty($fv['photo'])) {
+            foreach (explode(',', $fv['photo']) as $t) {
+                $t = trim($t);
+                if ($t) $targets[] = $t;
+            }
+        }
+
+        if (!empty($fv['mf_category'])) {
+            foreach (explode(',', $fv['mf_category']) as $t) {
+                $t = trim($t);
+                if ($t) $targets[] = $t;
+            }
+        }
+
+        $bodyLinks = $this->extractLinks($article->introtext . ' ' . $article->fulltext);
+        $targets = array_merge($targets, $bodyLinks);
+        $targets = array_unique(array_filter($targets));
+
+        foreach ($targets as $target) {
+            $this->queueWebmention($url, $target);
         }
     }
 
-    protected function sendWebmention($source, $target)
+    protected function extractLinks(string $html): array
     {
-        $endpoint = $this->discoverEndpoint($target);
-        if (!$endpoint) return;
-
-        $data = http_build_query(['source' => $source, 'target' => $target]);
-
-        @file_get_contents($endpoint, false, stream_context_create([
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'content' => $data,
-                'timeout' => 5,
-            ]
-        ]));
+        $links = [];
+        if (preg_match_all('#https?://[^\s"<]+#i', $html, $m)) {
+            $links = $m[0];
+        }
+        return $links;
     }
 
-    protected function discoverEndpoint($url)
+    protected function queueWebmention(string $source, string $target)
     {
-        $html = @file_get_contents($url);
-        if (!$html) return null;
+        $db = Factory::getDbo();
 
-        if (preg_match('/rel=["\']webmention["\'].*?href=["\']([^"\']+)/i', $html, $m)) {
-            return $m[1];
-        }
+        $obj = (object) [
+            'source'      => $source,
+            'target'      => $target,
+            'status'      => 'pending',
+            'created'     => gmdate('Y-m-d H:i:s'),
+            'last_attempt'=> null,
+            'response'    => null,
+        ];
 
-        if (preg_match('/href=["\']([^"\']+)["\'].*?rel=["\']webmention["\']/i', $html, $m)) {
-            return $m[1];
-        }
-
-        return null;
+        $db->insertObject('#__webmention_queue', $obj);
     }
 }

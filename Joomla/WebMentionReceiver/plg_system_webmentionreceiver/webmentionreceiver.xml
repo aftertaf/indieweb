@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" version="6.0" group="system" method="upgrade">
     <name>plg_system_webmentionreceiver</name>
-    <author>aftertaf</author>
-    <version>1.0.0</version>
-    <description>Webmention receiver endpoint for IndieWeb.</description>
+    <author>example-author</author>
+    <version>1.2.0</version>
+    <description>Webmention receiver with follow-of detection.</description>
 
     <files>
         <filename plugin="webmentionreceiver">webmentionreceiver.php</filename>
         <folder>sql</folder>
     </files>
-
-    <install>
-        <sql>
-            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
-        </sql>
-    </install>
 </extension>

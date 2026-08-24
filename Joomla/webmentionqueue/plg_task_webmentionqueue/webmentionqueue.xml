@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="6.0" group="task" method="upgrade">
+    <name>plg_task_webmentionqueue</name>
+    <author>example-author</author>
+    <version>1.0.0</version>
+    <description>Webmention queue processor for Joomla Scheduled Tasks.</description>
+
+    <files>
+        <filename plugin="webmentionqueue">webmentionqueue.php</filename>
+    </files>
+
+    <config>
+        <fields name="params">
+            <fieldset name="general" label="Webmention Queue">
+                <field name="batch_size" type="integer" label="Batch size" default="20" />
+            </fieldset>
+        </fields>
+    </config>
+</extension>
