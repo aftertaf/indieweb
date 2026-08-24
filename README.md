@@ -196,31 +196,32 @@ This plugin is designed to work alongside:
 
 - **Webmention Receiver** (Plugin A)  
 - **Webmention Sender** (Plugin B)  
-- **Micropub Endpoint** (Plugin C)  
-##Plugin A - Webmention Receiver
-###Overview
+- **Micropub Endpoint** (Plugin C)
+  
+## Plugin A - Webmention Receiver
+### Overview
 The Webmention Receiver plugin provides an endpoint at /webmention to receive, validate, parse, and store Webmentions according to the IndieWeb standards. It supports mentions, replies, likes, and reposts.
 
-###Installation
+### Installation
 Unzip the plg_system_webmentionreceiver folder into your Joomla plugins/system/ directory.
 Install the plugin via Joomla Extension Manager using the provided XML manifest.
 The SQL install script will create the necessary #__webmentions table.
 Enable the plugin in the Joomla Plugin Manager.
 
-###Usage
+### Usage
 The plugin listens for POST requests at /webmention.
 It validates the source and target URLs, fetches and parses microformats from the source.
 Stores the mention data in the database.
 
-##Notes
+## Notes
 Ensure your site URL matches the target URLs for validation.
 The plugin requires Joomla 6 and PHP with allow_url_fopen enabled.
 
-##Plugin B - Webmention Sender
-###Overview
+## Plugin B - Webmention Sender
+### Overview
 The Webmention Sender plugin automatically sends Webmentions when Joomla articles are published or updated. It scans article content for outbound links and sends Webmentions to discovered endpoints.
 
-###Installation
+### Installation
 Unzip the plg_content_webmentionsender folder into your Joomla plugins/content/ directory.
 Install the plugin via Joomla Extension Manager using the provided XML manifest.
 The SQL install script will create the necessary #__webmention_queue table.
@@ -236,25 +237,24 @@ Sending is done via HTTP POST with a short timeout.
 The plugin requires Joomla 6 and PHP with allow_url_fopen enabled.
 
 ## Plugin C - Micropub Endpoint
-###Overview
+### Overview
 The Micropub Endpoint plugin provides a Micropub API endpoint at /micropub allowing external apps to post content to your Joomla site.
 
-###Installation
+### Installation
 Unzip the plg_system_micropub folder into your Joomla plugins/system/ directory.
 Install the plugin via Joomla Extension Manager using the provided XML manifest.
 The SQL install script will create the necessary #__micropub_tokens table.
 Enable the plugin in the Joomla Plugin Manager.
 
-###Usage
+### Usage
 The plugin listens for POST requests at /micropub.
 Accepts content, name, like-of, and in-reply-to parameters.
 Creates Joomla articles in category ID 2 with published state.
 
-###Notes
+### Notes
 Authentication and token validation are not implemented in this version.
-
 The plugin requires Joomla 6 and PHP.
----
+
 
 ## ❤️ Author
 
