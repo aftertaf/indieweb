@@ -1,7 +1,7 @@
 <?php
 /**
  * @package     Joomla.Plugin
- * @subpackage  Content.indieweb
+ * @subpackage  System.indieweb
  */
 
 defined('_JEXEC') or die;
@@ -11,9 +11,8 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\Component\Fields\Administrator\Helper\FieldsHelper;
-use Joomla\CMS\Table\Table;
 
-class PlgContentIndieweb extends CMSPlugin
+class PlgSystemIndieweb extends CMSPlugin
 {
     protected $app;
 
@@ -21,6 +20,152 @@ class PlgContentIndieweb extends CMSPlugin
     {
         parent::__construct($subject, $config);
         $this->app = Factory::getApplication();
+    }
+
+    /* --------------------------------------------------------------
+     *  WEBFINGER ENDPOINT (/.well-known/webfinger)
+     * -------------------------------------------------------------- */
+
+    public function onAfterRoute()
+    {
+        if (!$this->app->isClient('site')) {
+            return;
+        }
+
+        $input    = $this->app->input;
+        $resource = $input->getString('resource', '');
+
+        // If there's no "resource" parameter, it's not WebFinger
+        if ($resource === '') {
+            return;
+        }
+
+        // Plugin params
+        $configuredUsername = trim($this->params->get('webfinger_username', ''));
+        $profileUrl         = trim($this->params->get('hcard_url', Uri::root()));
+        $name               = trim($this->params->get('hcard_name', ''));
+        $photo              = trim($this->params->get('hcard_photo', ''));
+        $relmeRaw           = trim($this->params->get('relme', ''));
+        $fediverseHandle    = trim($this->params->get('fediverse_handle', ''));
+        $micropubEndpoint   = trim($this->params->get('micropub_endpoint', Uri::root() . 'micropub'));
+        $webmentionEndpoint = trim($this->params->get('webmention_endpoint', Uri::root() . 'webmention'));
+        $authEndpoint       = trim($this->params->get('authorization_endpoint', 'https://indieauth.com/auth'));
+        $tokenEndpoint      = trim($this->params->get('token_endpoint', 'https://tokens.indieauth.com/token'));
+
+        // Enforce resource match if username is configured
+        if ($configuredUsername !== '') {
+            $expectedResource = 'acct:' . $configuredUsername;
+            if ($resource !== $expectedResource) {
+                $this->sendWebFingerError(404, 'Unknown resource');
+                return;
+            }
+        }
+
+        $subject = $resource;
+
+        // rel=me links
+        $relme = [];
+        if ($relmeRaw) {
+            foreach (explode("\n", $relmeRaw) as $link) {
+                $link = trim($link);
+                if ($link) {
+                    $relme[] = $link;
+                }
+            }
+        }
+
+        // Build JRD
+        $jrd = [
+            'subject' => $subject,
+            'aliases' => array_values(array_filter([
+                $profileUrl,
+            ])),
+            'links'   => [],
+        ];
+
+        // Self (profile / ActivityPub actor if bridged)
+        $jrd['links'][] = [
+            'rel'  => 'self',
+            'href' => $profileUrl,
+        ];
+
+        // Profile page
+        $jrd['links'][] = [
+            'rel'  => 'http://webfinger.net/rel/profile-page',
+            'href' => $profileUrl,
+        ];
+
+        // Webmention
+        if ($webmentionEndpoint) {
+            $jrd['links'][] = [
+                'rel'  => 'webmention',
+                'href' => $webmentionEndpoint,
+            ];
+        }
+
+        // Micropub
+        if ($micropubEndpoint) {
+            $jrd['links'][] = [
+                'rel'  => 'micropub',
+                'href' => $micropubEndpoint,
+            ];
+        }
+
+        // IndieAuth
+        if ($authEndpoint) {
+            $jrd['links'][] = [
+                'rel'  => 'authorization_endpoint',
+                'href' => $authEndpoint,
+            ];
+        }
+
+        if ($tokenEndpoint) {
+            $jrd['links'][] = [
+                'rel'  => 'token_endpoint',
+                'href' => $tokenEndpoint,
+            ];
+        }
+
+        // rel=me
+        foreach ($relme as $link) {
+            $jrd['links'][] = [
+                'rel'  => 'me',
+                'href' => $link,
+            ];
+        }
+
+        // Optional: fediverse handle as alias
+        if ($fediverseHandle) {
+            $jrd['aliases'][] = $fediverseHandle;
+        }
+
+        // Optional: h-card photo as avatar
+        if ($photo) {
+            $jrd['links'][] = [
+                'rel'  => 'avatar',
+                'href' => $photo,
+            ];
+        }
+
+        // Output JSON and stop Joomla
+        $this->app->setHeader('Content-Type', 'application/jrd+json; charset=utf-8', true);
+        $this->app->setBody(json_encode($jrd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->app->sendHeaders();
+        echo $this->app->getBody();
+        $this->app->close();
+    }
+
+    protected function sendWebFingerError(int $code, string $message)
+    {
+        $this->app->setHeader('Content-Type', 'application/jrd+json; charset=utf-8', true);
+        $this->app->setHeader('Status', $code . ' ' . $message, true);
+        $this->app->setBody(json_encode([
+            'error'  => $message,
+            'status' => $code,
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $this->app->sendHeaders();
+        echo $this->app->getBody();
+        $this->app->close();
     }
 
     /* --------------------------------------------------------------
@@ -86,7 +231,7 @@ class PlgContentIndieweb extends CMSPlugin
     }
 
     /* --------------------------------------------------------------
-     *  ARTICLE MICROFORMATS (your original logic)
+     *  ARTICLE MICROFORMATS
      * -------------------------------------------------------------- */
 
     public function onContentBeforeDisplay($context, &$article, &$params, $limit = 0)
@@ -190,7 +335,7 @@ class PlgContentIndieweb extends CMSPlugin
     }
 
     /* --------------------------------------------------------------
-     *  HEAD METADATA (rel=me, IndieAuth, WebFinger, Webmention, Micropub)
+     *  HEAD METADATA (rel=me, IndieAuth, WebFinger LRDD, Webmention, Micropub)
      * -------------------------------------------------------------- */
 
     public function onBeforeCompileHead()
@@ -200,7 +345,7 @@ class PlgContentIndieweb extends CMSPlugin
         $doc = $this->app->getDocument();
         $url = Uri::current();
 
-        // ActivityPub discovery
+        // ActivityPub discovery via Bridgy Fed
         $doc->addHeadLink(
             'https://fed.brid.gy/r/' . $url,
             'alternate',
@@ -219,7 +364,7 @@ class PlgContentIndieweb extends CMSPlugin
             }
         }
 
-        // WebFinger LRDD
+        // WebFinger LRDD (optional)
         $lrdd = trim($this->params->get('webfinger_url', ''));
         if ($lrdd) {
             $doc->addHeadLink(
@@ -231,17 +376,23 @@ class PlgContentIndieweb extends CMSPlugin
         }
 
         // IndieAuth
-        $auth = trim($this->params->get('authorization_endpoint', ''));
-        $token = trim($this->params->get('token_endpoint', ''));
+        $auth  = trim($this->params->get('authorization_endpoint', 'https://indieauth.com/auth'));
+        $token = trim($this->params->get('token_endpoint', 'https://tokens.indieauth.com/token'));
 
         if ($auth)  $doc->addHeadLink($auth, 'authorization_endpoint', 'rel');
         if ($token) $doc->addHeadLink($token, 'token_endpoint', 'rel');
 
         // Webmention endpoint
-        $doc->addHeadLink(Uri::root() . 'webmention', 'webmention', 'rel');
+        $webmentionEndpoint = trim($this->params->get('webmention_endpoint', Uri::root() . 'webmention'));
+        if ($webmentionEndpoint) {
+            $doc->addHeadLink($webmentionEndpoint, 'webmention', 'rel');
+        }
 
         // Micropub endpoint
-        $doc->addHeadLink(Uri::root() . 'micropub', 'micropub', 'rel');
+        $micropubEndpoint = trim($this->params->get('micropub_endpoint', Uri::root() . 'micropub'));
+        if ($micropubEndpoint) {
+            $doc->addHeadLink($micropubEndpoint, 'micropub', 'rel');
+        }
     }
 
     /* --------------------------------------------------------------

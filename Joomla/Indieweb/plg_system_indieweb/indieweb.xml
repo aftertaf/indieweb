@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="6.0" group="system" method="upgrade">
+    <name>plg_system_indieweb</name>
+    <author>aftertaf</author>
+    <version>1.3.0</version>
+    <description>IndieWeb identity, Micropub integration, Webmention metadata, and Bridgy Fed support.</description>
+
+    <files>
+        <filename plugin="indieweb">indieweb.php</filename>
+    </files>
+
+    <config>
+        <fields name="params">
+
+            <!-- Identity / h-card -->
+            <fieldset name="identity" label="Identity and h-card">
+
+                <field
+                    name="hcard_name"
+                    type="text"
+                    label="Full Name"
+                    description="Your real or display name. Used in your h-card and author identity."
+                />
+
+                <field
+                    name="hcard_url"
+                    type="url"
+                    label="Profile URL"
+                    description="Your canonical homepage URL. Used as your primary IndieWeb identity."
+                />
+
+                <field
+                    name="hcard_photo"
+                    type="url"
+                    label="Photo URL"
+                    description="Square profile photo (recommended 512x512). Displayed in your h-card."
+                />
+
+                <field
+                    name="email"
+                    type="text"
+                    label="Email"
+                    description="Optional. Adds a mailto: link to your h-card. Publicly visible."
+                />
+
+                <field
+                    name="fediverse_handle"
+                    type="text"
+                    label="Fediverse Handle"
+                    description="Your ActivityPub username (e.g., @user@instance). Helps Bridgy Fed link identities."
+                />
+
+                <field
+                    name="hcard_note"
+                    type="textarea"
+                    label="Profile Note"
+                    description="Short bio or description included in your h-card."
+                />
+
+                <field
+                    name="relme"
+                    type="textarea"
+                    label="rel=me URLs"
+                    description="One URL per line. Used for identity verification across the IndieWeb and fediverse."
+                />
+
+            </fieldset>
+
+            <!-- WebFinger -->
+            <fieldset name="webfinger" label="WebFinger">
+                <field
+                    name="webfinger_username"
+                    type="text"
+                    label="WebFinger Username"
+                    description="Identity string for fediverse discovery (e.g., user@yourdomain.com)."
+                />
+
+                <field
+                    name="webfinger_url"
+                    type="text"
+                    label="WebFinger LRDD URL"
+                    description="Advanced: Override the LRDD URL if needed. Usually leave default."
+                    default="https://example.com/.well-known/webfinger?resource={uri}"
+                />
+            </fieldset>
+
+            <!-- IndieAuth -->
+            <fieldset name="indieauth" label="IndieAuth">
+                <field
+                    name="authorization_endpoint"
+                    type="url"
+                    label="Authorization Endpoint"
+                    description="IndieAuth authorization endpoint. Use indieauth.com unless self-hosting."
+                    default="https://indieauth.com/auth"
+                />
+
+                <field
+                    name="token_endpoint"
+                    type="url"
+                    label="Token Endpoint"
+                    description="IndieAuth token verification endpoint. Use tokens.indieauth.com unless self-hosting."
+                    default="https://tokens.indieauth.com/token"
+                />
+            </fieldset>
+
+            <!-- Micropub -->
+            <fieldset name="micropub" label="Micropub">
+                <field
+                    name="micropub_endpoint"
+                    type="url"
+                    label="Micropub Endpoint"
+                    description="URL of your Micropub server. Required for Micropub clients to create posts."
+                />
+            </fieldset>
+
+            <!-- Webmention -->
+            <fieldset name="webmention" label="Webmention">
+                <field
+                    name="webmention_endpoint"
+                    type="url"
+                    label="Webmention Endpoint"
+                    description="URL of your Webmention receiver. Required for replies, likes, reposts, and Bridgy Fed."
+                />
+            </fieldset>
+
+        </fields>
+    </config>
+</extension>

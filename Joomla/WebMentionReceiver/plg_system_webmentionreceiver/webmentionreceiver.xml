@@ -7,6 +7,5 @@
 
     <files>
         <filename plugin="webmentionreceiver">webmentionreceiver.php</filename>
-        <folder>sql</folder>
     </files>
 </extension>
