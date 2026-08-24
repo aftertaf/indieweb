@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" version="6.0" group="content" method="upgrade">
     <name>plg_content_indieweb</name>
-    <author>aftertaf</author>
-    <version>1.0.2</version>
-    <description>IndieWeb microformats injection for Joomla articles (Astroid compatible).</description>
+    <author>example-author</author>
+    <version>1.2.0</version>
+    <description>IndieWeb identity, Micropub integration, Webmention metadata, and Bridgy Fed support.</description>
 
     <files>
         <filename plugin="indieweb">indieweb.php</filename>
@@ -11,14 +11,36 @@
 
     <config>
         <fields name="params">
-            <fieldset name="basic" label="Basic">
-                <field name="debug" type="radio" default="0"
-                       label="Debug logging"
-                       description="Enable logging to administrator/logs/indieweb.php">
-                    <option value="1">Yes</option>
-                    <option value="0">No</option>
-                </field>
+
+            <!-- rel=me identity links -->
+            <fieldset name="identity" label="Identity Links">
+                <field
+                    name="relme"
+                    type="textarea"
+                    label="rel=me URLs"
+                    description="One URL per line"
+                />
             </fieldset>
+
+            <!-- Homepage h-card -->
+            <fieldset name="hcard" label="Homepage h-card">
+                <field name="hcard_name"  type="text"     label="Name"        default="example-user" />
+                <field name="hcard_url"   type="text"     label="Homepage URL" default="https://example.com" />
+                <field name="hcard_photo" type="text"     label="Photo URL"   default="/images/example-photo.webp" />
+                <field name="hcard_note"  type="textarea" label="Note"        default="Example profile note." />
+            </fieldset>
+
+            <!-- IndieAuth -->
+            <fieldset name="indieauth" label="IndieAuth">
+                <field name="authorization_endpoint" type="text" label="Authorization Endpoint" default="https://indieauth.com/auth" />
+                <field name="token_endpoint"         type="text" label="Token Endpoint"         default="https://tokens.indieauth.com/token" />
+            </fieldset>
+
+            <!-- WebFinger -->
+            <fieldset name="webfinger" label="WebFinger">
+                <field name="webfinger_url" type="text" label="WebFinger LRDD URL" default="https://example.com/.well-known/webfinger?resource={uri}" />
+            </fieldset>
+
         </fields>
     </config>
 </extension>
