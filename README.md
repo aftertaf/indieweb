@@ -1,9 +1,14 @@
-# IndieWeb Content Plugin for Joomla 6  
+# Fediverse Plugins for Joomla 6  
+### Plugin Zero - IndieWeb Microformats injector
 Adds clean Microformats2 (h‑entry + h‑card + post‑type properties) to Joomla articles, fully compatible with Astroid Framework.
-
 This plugin makes your Joomla site IndieWeb‑aware and ready for Webmention, Micropub, and Bridgy Fed.
 
----
+### Plugin A - Webmention Receiver
+The Webmention Receiver plugin provides an endpoint at /webmention to receive, validate, parse, and store Webmentions according to the IndieWeb standards. It supports mentions, replies, likes, and reposts.
+### Plugin B - Webmention Sender
+The Webmention Sender plugin automatically sends Webmentions when Joomla articles are published or updated. It scans article content for outbound links and sends Webmentions to discovered endpoints.
+### Plugin C - Micropub Endpoint
+The Micropub Endpoint plugin provides a Micropub API endpoint at /micropub allowing external apps to post content to your Joomla site.
 
 ## ✨ Features
 
@@ -191,11 +196,65 @@ This plugin is designed to work alongside:
 
 - **Webmention Receiver** (Plugin A)  
 - **Webmention Sender** (Plugin B)  
-- **Micropub Endpoint** (Plugin C)  
+- **Micropub Endpoint** (Plugin C)
+  
+## Plugin A - Webmention Receiver
+### Overview
+The Webmention Receiver plugin provides an endpoint at /webmention to receive, validate, parse, and store Webmentions according to the IndieWeb standards. It supports mentions, replies, likes, and reposts.
 
-All three can be installed independently.
+### Installation
+Unzip the plg_system_webmentionreceiver folder into your Joomla plugins/system/ directory.
+Install the plugin via Joomla Extension Manager using the provided XML manifest.
+The SQL install script will create the necessary #__webmentions table.
+Enable the plugin in the Joomla Plugin Manager.
 
----
+### Usage
+The plugin listens for POST requests at /webmention.
+It validates the source and target URLs, fetches and parses microformats from the source.
+Stores the mention data in the database.
+
+## Notes
+Ensure your site URL matches the target URLs for validation.
+The plugin requires Joomla 6 and PHP with allow_url_fopen enabled.
+
+## Plugin B - Webmention Sender
+### Overview
+The Webmention Sender plugin automatically sends Webmentions when Joomla articles are published or updated. It scans article content for outbound links and sends Webmentions to discovered endpoints.
+
+### Installation
+Unzip the plg_content_webmentionsender folder into your Joomla plugins/content/ directory.
+Install the plugin via Joomla Extension Manager using the provided XML manifest.
+The SQL install script will create the necessary #__webmention_queue table.
+Enable the plugin in the Joomla Plugin Manager.
+
+### Usage
+The plugin triggers on article save events.
+It extracts all URLs from the article content and attempts to send Webmentions.
+Endpoint discovery is performed by parsing the target page HTML.
+
+### Notes
+Sending is done via HTTP POST with a short timeout.
+The plugin requires Joomla 6 and PHP with allow_url_fopen enabled.
+
+## Plugin C - Micropub Endpoint
+### Overview
+The Micropub Endpoint plugin provides a Micropub API endpoint at /micropub allowing external apps to post content to your Joomla site.
+
+### Installation
+Unzip the plg_system_micropub folder into your Joomla plugins/system/ directory.
+Install the plugin via Joomla Extension Manager using the provided XML manifest.
+The SQL install script will create the necessary #__micropub_tokens table.
+Enable the plugin in the Joomla Plugin Manager.
+
+### Usage
+The plugin listens for POST requests at /micropub.
+Accepts content, name, like-of, and in-reply-to parameters.
+Creates Joomla articles in category ID 2 with published state.
+
+### Notes
+Authentication and token validation are not implemented in this version.
+The plugin requires Joomla 6 and PHP.
+
 
 ## ❤️ Author
 
