@@ -227,12 +227,12 @@ Install the plugin via Joomla Extension Manager using the provided XML manifest.
 The SQL install script will create the necessary #__webmention_queue table.
 Enable the plugin in the Joomla Plugin Manager.
 
-###Usage
+### Usage
 The plugin triggers on article save events.
 It extracts all URLs from the article content and attempts to send Webmentions.
 Endpoint discovery is performed by parsing the target page HTML.
 
-###Notes
+### Notes
 Sending is done via HTTP POST with a short timeout.
 The plugin requires Joomla 6 and PHP with allow_url_fopen enabled.
 
