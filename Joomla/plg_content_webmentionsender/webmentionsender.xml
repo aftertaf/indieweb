@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="6.0" group="content" method="upgrade">
+    <name>plg_content_webmentionsender</name>
+    <author>aftertaf</author>
+    <version>1.0.0</version>
+    <description>Webmention sender for IndieWeb.</description>
+
+    <files>
+        <filename plugin="webmentionsender">webmentionsender.php</filename>
+        <folder>sql</folder>
+    </files>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+</extension>
