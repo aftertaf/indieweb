@@ -137,8 +137,8 @@ Adds one or more:
 If you cross‑post to Mastodon, Bluesky, Pixelfed, etc., add their URLs to the `syndication` field:
 
 ```
-https://mastodon.social/@aftertaf/12345,
-https://bsky.app/profile/aftertaf.bsky.social/post/67890
+https://mastodon.social/@yourhandle/12345,
+https://bsky.app/profile/yourhandle.bsky.social/post/67890
 ```
 
 The plugin outputs:
