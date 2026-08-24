@@ -1,16 +1,14 @@
 # Fediverse Plugins for Joomla 6  
-### plg_content_indieweb
+### Plugin Zero - IndieWeb Microformats injector
 Adds clean Microformats2 (h‑entry + h‑card + post‑type properties) to Joomla articles, fully compatible with Astroid Framework.
 This plugin makes your Joomla site IndieWeb‑aware and ready for Webmention, Micropub, and Bridgy Fed.
 
-###Plugin A - Webmention Receiver
+### Plugin A - Webmention Receiver
 The Webmention Receiver plugin provides an endpoint at /webmention to receive, validate, parse, and store Webmentions according to the IndieWeb standards. It supports mentions, replies, likes, and reposts.
-
-###Plugin B - Webmention Sender
+### Plugin B - Webmention Sender
 The Webmention Sender plugin automatically sends Webmentions when Joomla articles are published or updated. It scans article content for outbound links and sends Webmentions to discovered endpoints.
 ### Plugin C - Micropub Endpoint
 The Micropub Endpoint plugin provides a Micropub API endpoint at /micropub allowing external apps to post content to your Joomla site.
----
 
 ## ✨ Features
 
