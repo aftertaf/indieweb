@@ -10,6 +10,7 @@ use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Fields\Administrator\Helper\FieldsHelper;
+use Joomla\CMS\Http\HttpFactory;
 
 class PlgSystemWebmentionbroker extends CMSPlugin
 {
@@ -83,70 +84,74 @@ class PlgSystemWebmentionbroker extends CMSPlugin
         $targets = array_unique(array_filter($targets));
 
         foreach ($targets as $target) {
+            $this->app->getLogger()->info('webmentionbroker: queue outgoing; source=' . $url . ' target=' . $target);
             $this->queueWebmention($url, $target);
         }
     }
 
-/**
- * Handle incoming Webmention POST
- */
-protected function handleIncoming()
-{
-    $input = $this->app->input;
+    /**
+     * Handle incoming Webmention POST
+     */
+    protected function handleIncoming()
+    {
+        $input = $this->app->input;
 
-    // Determine HTTP method safely
-    $method = null;
-    if (method_exists($input, 'getMethod')) {
-        $method = $input->getMethod();
-    } elseif (!empty($_SERVER['REQUEST_METHOD'])) {
-        $method = $_SERVER['REQUEST_METHOD'];
-    } else {
-        $method = 'GET';
+        // Determine HTTP method safely
+        $method = null;
+        if (method_exists($input, 'getMethod')) {
+            $method = $input->getMethod();
+        } elseif (!empty($_SERVER['REQUEST_METHOD'])) {
+            $method = $_SERVER['REQUEST_METHOD'];
+        } else {
+            $method = 'GET';
+        }
+
+        $this->app->getLogger()->info('webmentionbroker: handleIncoming invoked; method=' . $method);
+
+        if (strtoupper($method) !== 'POST') {
+            return $this->respond(405, 'Webmention endpoint requires POST');
+        }
+
+        $source = $input->post->getString('source', '');
+        $target = $input->post->getString('target', '');
+
+        if (!$source || !$target) {
+            return $this->respond(400, 'Missing source or target');
+        }
+
+        // Try to fetch the source using Joomla HTTP client; do not fail the request if fetch fails
+        $html = '';
+        try {
+            $http = HttpFactory::getHttp();
+            $response = $http->get($source, ['User-Agent' => 'aftertaf-webmention/1.0'], 10);
+            $html = $response->body ?? '';
+        } catch (\Throwable $e) {
+            $this->app->getLogger()->info('webmentionbroker: fetch deferred; will verify async: ' . $e->getMessage());
+            $html = '';
+        }
+
+        $type = $html ? $this->detectType($html) : 'mention';
+
+        $db = Factory::getDbo();
+        $obj = (object) [
+            'source'  => $source,
+            'target'  => $target,
+            'type'    => $type,
+            'status'  => ($html ? 'verified' : 'pending'),
+            'created' => gmdate('Y-m-d H:i:s'),
+        ];
+
+        try {
+            $db->insertObject('#__webmention_received', $obj);
+            $id = $db->insertid();
+            $this->app->getLogger()->info('webmentionbroker: webmention queued; id=' . $id . ' status=' . $obj->status);
+        } catch (\Throwable $e) {
+            $this->app->getLogger()->error('webmentionbroker: insert failed: ' . $e->getMessage());
+            return $this->respond(500, 'Database error');
+        }
+
+        return $this->respond(202, 'Webmention accepted');
     }
-
-    if (strtoupper($method) !== 'POST') {
-        return $this->respond(405, 'Webmention endpoint requires POST');
-    }
-
-    $source = $input->post->getString('source', '');
-    $target = $input->post->getString('target', '');
-
-    if (!$source || !$target) {
-        return $this->respond(400, 'Missing source or target');
-    }
-
-    try {
-        $html = @file_get_contents($source);
-    } catch (\Throwable $e) {
-        // Log the fetch error but return a client error to the caller
-        $this->app->getLogger()->error('Webmention fetch error: ' . $e->getMessage());
-        return $this->respond(400, 'Unable to fetch source');
-    }
-
-    if (!$html) {
-        return $this->respond(400, 'Unable to fetch source');
-    }
-
-    $type = $this->detectType($html);
-
-    $db = Factory::getDbo();
-    $obj = (object) [
-        'source'  => $source,
-        'target'  => $target,
-        'type'    => $type,
-        'created' => gmdate('Y-m-d H:i:s'),
-    ];
-
-    try {
-        $db->insertObject('#__webmention_received', $obj);
-    } catch (\Throwable $e) {
-        $this->app->getLogger()->error('Webmention DB insert error: ' . $e->getMessage());
-        return $this->respond(500, 'Database error');
-    }
-
-    return $this->respond(202, 'Webmention accepted');
-}
-
 
     /**
      * Detect Webmention type
@@ -188,9 +193,11 @@ protected function handleIncoming()
         ];
 
         try {
-            $db->insertObject('#__webmention_queue', $obj);
-        } catch (\Exception $e) {
-            // fail silently — do not break Joomla
+            $db->insertObject('#__webmention_received', $obj);
+            $id = $db->insertid();
+            $this->app->getLogger()->info('webmentionbroker: queued outgoing webmention; id=' . $id);
+        } catch (\Throwable $e) {
+            $this->app->getLogger()->error('webmentionbroker: queue insert failed: ' . $e->getMessage());
         }
     }
 
@@ -199,8 +206,11 @@ protected function handleIncoming()
      */
     protected function respond(int $code, string $message)
     {
+        $body = json_encode(['message' => $message]);
+        http_response_code($code);
         $this->app->setHeader('Content-Type', 'application/json', true);
-        $this->app->setHeader('Status', $code, true);
-        $this->app->setBody(json_encode(['message' => $message]));
+        $this->app->setBody($body);
+        $this->app->getLogger()->info('webmentionbroker: respond called; code=' . $code);
+        $this->app->close();
     }
 }
