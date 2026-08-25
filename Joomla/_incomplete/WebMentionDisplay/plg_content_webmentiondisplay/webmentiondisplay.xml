@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="6.0" group="content" method="upgrade">
+    <name>plg_content_webmentiondisplay</name>
+    <author>aftertaf</author>
+    <version>1.0.0</version>
+    <description>Displays incoming Webmentions under articles.</description>
+
+    <files>
+        <filename plugin="webmentiondisplay">webmentiondisplay.php</filename>
+    </files>
+</extension>

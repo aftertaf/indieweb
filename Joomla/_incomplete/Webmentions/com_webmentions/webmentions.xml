@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="6.0" method="upgrade">
+    <name>com_webmentions</name>
+    <author>aftertaf</author>
+    <version>1.0.0</version>
+    <description>Webmentions admin UI</description>
+
+    <administration>
+        <menu>Webmentions</menu>
+
+        <submenu>
+            <menu link="index.php?option=com_webmentions&view=mentions">Incoming Mentions</menu>
+            <menu link="index.php?option=com_webmentions&view=queue">Outgoing Queue</menu>
+        </submenu>
+
+        <files>
+            <folder>src</folder>
+            <filename>webmentions.xml</filename>
+        </files>
+    </administration>
+</extension>

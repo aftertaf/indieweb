@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="6.0" group="system" method="upgrade">
+    <name>plg_system_micropub</name>
+    <author>example-author</author>
+    <version>1.2.0</version>
+    <description>Micropub endpoint with media, JSON, and IndieAuth token validation.</description>
+
+    <files>
+        <filename plugin="micropub">micropub.php</filename>
+        <folder>sql</folder>
+    </files>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8mb4">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+
+    <config>
+        <fields name="params">
+            <fieldset name="general" label="Micropub">
+                <field name="default_catid" type="integer" label="Default Category ID" default="2" />
+                <field name="media_path" type="text" label="Media Upload Path" default="images/micropub" />
+            </fieldset>
+        </fields>
+    </config>
+</extension>
