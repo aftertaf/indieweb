@@ -26,7 +26,7 @@ class PlgSystemIndieweb extends CMSPlugin
      *  WEBFINGER ENDPOINT (/.well-known/webfinger)
      * -------------------------------------------------------------- */
 
-    public function onAfterRoute()
+    public function onAfterInitialise()
     {
         if (!$this->app->isClient('site')) {
             return;
